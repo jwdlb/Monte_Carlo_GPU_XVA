@@ -1,0 +1,16 @@
+/build/
+/cmake-build-*/
+/out/
+/.cache/
+/.vscode/
+/.idea/
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.exe
+*.csv
+
+!results/.gitkeep
+
