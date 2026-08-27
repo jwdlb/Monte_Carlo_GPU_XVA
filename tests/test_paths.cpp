@@ -1,26 +1,24 @@
-#include "gpu_lsm/path_matrix.hpp"
+#include "gpu_lsm/cpu_paths.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
-TEST_CASE("PathMatrix stores states in time-major order") {
-    gpu_lsm::PathMatrix paths(3, 2);
-    paths(1, 0) = 10.0;
-    paths(1, 1) = 11.0;
+#include <cmath>
 
-    REQUIRE(paths.data()[2] == 10.0);
-    REQUIRE(paths.data()[3] == 11.0);
-    REQUIRE(paths.bytes() == 6 * sizeof(double));
+TEST_CASE("exact GBM paths are reproducible and start at spot") {
+    gpu_lsm::SimulationConfig simulation{};
+    simulation.num_paths = 500;
+    simulation.num_time_steps = 52;
+    const auto first = gpu_lsm::generate_exact_gbm_paths_with_timings(
+        gpu_lsm::MarketParams{}, 1.0, simulation);
+    const auto second = gpu_lsm::generate_exact_gbm_paths_with_timings(
+        gpu_lsm::MarketParams{}, 1.0, simulation);
+    REQUIRE(first.paths.num_times() == 53);
+    REQUIRE(first.paths.num_paths() == 500);
+    for (const double spot : first.paths.time_slice(0)) REQUIRE(spot == 100.0);
+    for (std::size_t index = 0; index < first.paths.size(); ++index) {
+        REQUIRE(std::isfinite(first.paths.data()[index]));
+        REQUIRE(first.paths.data()[index] > 0.0);
+        REQUIRE(first.paths.data()[index] == second.paths.data()[index]);
+    }
+    REQUIRE(first.timings.total_ms >= first.timings.path_evolution_ms);
 }
-
-TEST_CASE("PathMatrix rejects invalid dimensions and indices") {
-    REQUIRE_THROWS_AS(gpu_lsm::PathMatrix(0, 10), std::invalid_argument);
-
-    const gpu_lsm::PathMatrix paths(2, 2);
-    REQUIRE_THROWS_AS(paths(2, 0), std::out_of_range);
-    REQUIRE_THROWS_AS(paths(0, 2), std::out_of_range);
-}
-
-TEST_CASE("exact GBM path generation is reproducible") {
-    SKIP("Enable after implementing generate_paths");
-}
-
