@@ -13,4 +13,10 @@ CudaBermudanResult run_cuda_bermudan_xva(
     throw std::runtime_error("CUDA backend is not available in this build");
 }
 
+CudaBermudanResult run_cuda_bermudan_xva(
+    const MarketParams&, const BermudanPutParams&, const SimulationConfig&, const CreditParams&,
+    const CudaPipelineOptions&) {
+    throw std::runtime_error("CUDA backend is not available in this build");
+}
+
 }  // namespace gpu_lsm
